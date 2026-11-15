@@ -440,12 +440,18 @@ export class Match {
   this.emit({ type: "reloadEnd", id: f.id, weapon: f.weapon });
  }
  switchWeapon(f, slot) {
-  if (!f.alive || slot !== 1) return false;
-  const owned = OWNED_ORDER.find(k => k !== f.weapon && (f.ammo[k] ?? 0) + (f.reserve[k] ?? 0) > 0);
-  if (owned === void 0) return false; f.reloadDur = 0;
-  f.reloading = 0; f.fireCooldown = Math.max(f.fireCooldown, 0.28);
-  f.weapon = owned; f.shotIndex = 0;
-  this.emit({ type: "weaponSwitch", id: f.id, weapon: owned });
+  if (!f.alive) return false;
+  const want = slot === 1 ? "primary" : slot === 2 ? "sidearm" : "util";
+  const owned = k => (f.ammo[k] ?? 0) + (f.reserve[k] ?? 0) > 0;
+  let pick = null;
+  if (want === "primary") pick = OWNED_ORDER.find(k => k !== "sidearm" && owned(k)) ?? null;
+  else if (want === "sidearm") pick = owned("sidearm") ? "sidearm" : null;
+  else pick = OWNED_ORDER.find(k => k !== "sidearm" && owned(k)) ?? (owned("sidearm") ? "sidearm" : null);
+  if (pick === null || pick === f.weapon) return false;
+  f.reloadDur = 0; f.reloading = 0;
+  f.fireCooldown = Math.max(f.fireCooldown, 0.28);
+  f.weapon = pick; f.shotIndex = 0;
+  this.emit({ type: "weaponSwitch", id: f.id, weapon: pick });
   return true;
  }
  killFighter(victim, killer, zone, weapon) {
