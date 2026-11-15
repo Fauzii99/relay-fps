@@ -29,8 +29,25 @@ server, `file://` will not load them):
 node serve.ts 8127
 ```
 
-then open <http://127.0.0.1:8127/>. `WASD` moves, mouse looks, `1`/`2` switch weapon, `B` opens the
-buy menu during the buy phase, `F` plants or defuses, `E`/`R` handles utility and reload.
+then open <http://127.0.0.1:8127/>.
+
+| Input | Action |
+|---|---|
+| `W A S D` | move |
+| mouse | look, left button fires |
+| `Shift` | walk |
+| `Ctrl` / `C` | crouch |
+| `Space` | jump |
+| `1` | primary weapon |
+| `2` | sidearm |
+| `3` | last owned weapon |
+| `R` | reload |
+| `4` / `G` | throw smoke |
+| `5` / `F` | throw frag |
+| `E` | hold to plant or defuse the beacon |
+| `B` | buy menu (buy phase only) |
+| `Esc` | close the buy menu, else pause |
+| `M` | mute |
 
 ## Shape of the code
 
