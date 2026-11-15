@@ -742,83 +742,9 @@ function frame(now) {
  }
  if (SHOT_SPEC !== null && !engine.shotFrozen && m.time >= SHOT_SPEC.simSeconds) freezeForCapture();
 }
-function stageCamera() {
- const m = match(); if (SHOT_SPEC === null) return null;
- if (SHOT_SPEC.stage !== true) return null;
- const cands = m.fighters.filter(f => f.alive && f.team !== m.player.team);
- if (cands.length === 0) return null;
- const range = SHOT_SPEC.range ?? 10.5;
- let best = null;
- const proj = new Vector3;
- for (const f of cands) {
-  for (let i = 0; i < 36; i++) {
-   const a = i / 36 * Math.PI * 2;
-   const cx = f.pos.x + Math.cos(a) * range; const cz = f.pos.z + Math.sin(a) * range;
-   if (cx < MAP_BOUNDS.x1 + 1 || cx > MAP_BOUNDS.x2 - 1 || cz < MAP_BOUNDS.z1 + 1 || cz > MAP_BOUNDS.z2 - 1) continue;
-   const fix = m.world.resolve(cx, cz, 0.42, 0, 1.78, 0.5);
-   if (Math.hypot(fix.x - cx, fix.z - cz) > 0.02) continue;
-   if (!m.world.lineOfSight(cx, 1.55, cz, f.pos.x, f.pos.y + 1.15, f.pos.z, b => b.kind === "rail")) continue;
-   const yaw = Math.atan2(-(f.pos.x - cx), -(f.pos.z - cz));
-   camera.position.set(cx, 1.6, cz); camera.rotation.set(0, 0, 0);
-   camera.rotateY(yaw); camera.rotateX(0.04); camera.updateMatrixWorld(true);
-   camera.updateProjectionMatrix();
-   let inView = 0; let openPct = 0;
-   for (const o of m.fighters) {
-    if (o.team === m.player.team || !o.alive) continue;
-    proj.set(o.pos.x, o.pos.y + 1.0, o.pos.z).project(camera);
-    if (Math.abs(proj.x) < 0.86 && Math.abs(proj.y) < 0.8 && proj.z < 1) inView++;
-   }
-   let open = 0; let probes = 0;
-   for (let k = 0; k < 8; k++) {
-    const b = (k / 8 - 0.5) * Math.PI * 0.9; probes++;
-    if (m.world.lineOfSight(cx, 1.55, cz, cx + Math.cos(b + yaw) * 12, 1.55, cz + Math.sin(b + yaw) * 12, q => q.kind === "rail")) open++;
-   }
-   openPct = open / probes;
-   const score = inView * 4 + openPct * 6 - Math.abs(range - Math.hypot(cx - f.pos.x, cz - f.pos.z)) * 0.4;
-   if (best === null || score > best.score) best = { score: score, cx: cx, cz: cz, yaw: yaw, fx: f.pos.x, fy: f.pos.y, fz: f.pos.z, id: f.id, inView: inView, openPct: openPct };
-  }
- }
- if (best === null) return null;
- const p = m.player;
- p.pos = { x: best.cx, y: 0, z: best.cz }; p.vel = { x: 0, y: 0, z: 0 };
- p.yaw = best.yaw; p.pitch = 0.04;
- p.alive = true; p.health = Math.max(p.health, 92); p.armor = Math.max(p.armor ?? 0, 40);
- camera.position.set(best.cx, 1.6, best.cz); camera.rotation.set(0, 0, 0);
- camera.rotateY(best.yaw); camera.rotateX(0.04); camera.updateMatrixWorld(true);
- return { staged: true, target: best.id, range: Number(Math.hypot(best.fx - best.cx, best.fz - best.cz).toFixed(2)), inView: best.inView, openPct: Number((best.openPct * 100).toFixed(0)) };
-}
-function stageFire() { const m = match(); if (SHOT_SPEC === null || SHOT_SPEC.stage !== true) return null;
- const p = m.player; if (!p.alive) return null;
- p.fireCooldown = 0; p.spreadBloom = 0; p.reloadDur = 0;
- const target = m.fighters.find(f => f.alive && f.team !== p.team && Math.hypot(f.pos.x - p.pos.x, f.pos.z - p.pos.z) < (SHOT_SPEC.range ?? 10.5) + 4);
- if (target === void 0) return null;
- const dx = target.pos.x - p.pos.x; const dz = target.pos.z - p.pos.z;
- const yaw = Math.atan2(-dx, -dz);
- const pitch = Math.atan2(target.pos.y + 1.24 - (p.pos.y + MOVE.eyeStand), Math.hypot(dx, dz));
- let shots = 0;
- for (let i = 0; i < 4; i++) {
-  const w = WEAPONS[p.weapon];
-  if ((p.ammo[p.weapon] ?? 0) <= 0) break;
-  p.fireCooldown = 0;
-  if (m.tryFireFrom(p, yaw + (i - 1.5) * 0.006, pitch, { held: false })) shots++;
- }
- p.yaw = yaw; p.pitch = pitch;
- m.playerAim = { yaw: yaw, pitch: pitch };
- return { shots: shots, target: target.id };
-}
 function freezeForCapture() {
  engine.shotFrozen = true; mouseDown = false;
  input.fire = false; let settle = 0;
- const stageInfo = stageCamera();
- if (stageInfo !== null) {
-  const m = match();
-  m.smokes.length = 0; m.impacts.length = 0;
-  hud.killBanner.classList.remove("on"); hud.killBanner.textContent = "";
-  hud.damageArc.classList.remove("on"); hud.hitMarker.classList.remove("on");
-  clearTimeout(showBanner.timer);
-  m.player.alive = true;
-  stageFire();
- }
  const finish = () => {
   settle++; renderOnly(0);
   if (settle < 5) {
