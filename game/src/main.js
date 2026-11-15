@@ -1,4 +1,4 @@
-import { Scene, PerspectiveCamera, WebGLRenderer, Vector3, PointLight, SphereGeometry, MeshBasicMaterial, Mesh, Sprite, SpriteMaterial, AdditiveBlending, BufferGeometry, BufferAttribute, LineSegments, LineBasicMaterial, CanvasTexture, PCFShadowMap, SRGBColorSpace, ACESFilmicToneMapping, Points, PointsMaterial } from "three";
+import {Scene,PerspectiveCamera,WebGLRenderer,Vector3,PointLight,SphereGeometry,MeshBasicMaterial,Mesh,Sprite,SpriteMaterial,AdditiveBlending,BufferGeometry,BufferAttribute,LineSegments,LineBasicMaterial,CanvasTexture,PCFShadowMap,SRGBColorSpace,ACESFilmicToneMapping,Points,PointsMaterial} from "three";
 import { TICK, MAX_STEPS, TEAM, WEAPONS, MOVE, MATCH, SITES, SHOTS, SHOT_SPOTS, DEMO, KEYS } from "./config.js";
 import { Match } from "./sim.js";
 import { World } from "./world.js";
@@ -32,9 +32,19 @@ const lockPointer = () => {
  if (DEMO_MODE || document.pointerLockElement === canvas) return;
  try {
   const asked = canvas.requestPointerLock?.();
-  if (asked && typeof asked.catch === "function") asked.catch(() => {});
- } catch {}
+  if (asked && typeof asked.catch === "function") asked.catch(() => showResumePrompt());
+ } catch { showResumePrompt(); }
+ setTimeout(() => {
+  if (document.pointerLockElement !== canvas && running && !engine.buyOpen) showResumePrompt();
+ }, 450);
 };
+function showResumePrompt() {
+ if (DEMO_MODE) return;
+ hud.resumeHint.hidden = false; engine.awaitingLock = true;
+}
+function hideResumePrompt() {
+ hud.resumeHint.hidden = true; engine.awaitingLock = false;
+}
 const engine = {
  match: null,
  accumulator: 0,
@@ -65,7 +75,7 @@ const hud = {
  buyMenu:$("buy-menu"), buyMoney:$("buy-money"), buyTimer:$("buy-timer"), buyHint:$("buy-hint"),
  minimap:$("minimap"), startScreen:$("start-screen"), pauseScreen:$("pause-screen"), matchEnd:$("match-end"),
  matchEndTitle:$("match-end-title"), matchEndLine:$("match-end-line"), startBtn:$("start-btn"), resumeBtn:$("resume-btn"),
- restartBtn:$("restart-btn"), againBtn:$("again-btn")
+ restartBtn:$("restart-btn"), againBtn:$("again-btn"), resumeHint:$("resume-hint")
 };
 
 const world = new World(scene);
@@ -171,7 +181,8 @@ function readKeys() {
 addEventListener("keydown", e => {
  if (e.repeat) return; keys.add(e.code);
  if (KEYS.pause.includes(e.code)) {
-  togglePause(); return;
+  if (engine.buyOpen) closeBuy(); else togglePause();
+  return;
  }
  if (KEYS.mute.includes(e.code)) {
   audio.setMuted(!audio.muted); toast(audio.muted ? "SOUND OFF" : "SOUND ON");
@@ -179,7 +190,10 @@ addEventListener("keydown", e => {
  }
  if (KEYS.jump.includes(e.code) && running) input.jump = true;
  if (KEYS.reload.includes(e.code) && running) pendingReload = true;
- if (KEYS.buy.includes(e.code)) toggleBuy(); if (KEYS.slot1.includes(e.code)) cycleWeapon();
+ if (KEYS.buy.includes(e.code)) toggleBuy();
+ if (KEYS.slot1.includes(e.code)) selectSlot(1);
+ if (KEYS.slot2.includes(e.code)) selectSlot(2);
+ if (KEYS.slot3.includes(e.code)) selectSlot(3);
  if (KEYS.smoke.includes(e.code)) throwUtil("smoke"); if (KEYS.frag.includes(e.code)) throwUtil("frag");
  if (e.code === "Space" || e.code === "Tab") e.preventDefault();
 }, { passive: false });
@@ -188,9 +202,8 @@ addEventListener("keyup", e => {
 });
 addEventListener("mousedown", e => {
  if (e.button !== 0) return;
- if (!running) {
-  start(); return;
- }
+ if (!running) { start(); return; }
+ if (engine.awaitingLock || (!engine.buyOpen && document.pointerLockElement !== canvas)) { lockPointer(); return; }
  mouseDown = true;
 });
 addEventListener("mouseup", e => {
@@ -201,7 +214,8 @@ addEventListener("mousemove", e => {
  input.mouseDY += e.movementY;
 });
 document.addEventListener("pointerlockchange", () => {
- if (document.pointerLockElement !== canvas && running && !engine.paused && !DEMO_MODE) setPaused(true);
+ if (document.pointerLockElement === canvas) { hideResumePrompt(); return; }
+ if (running && !engine.paused && !DEMO_MODE && !engine.buyOpen) setPaused(true);
 });
 addEventListener("contextmenu", e => e.preventDefault());
 const feedNodes = [];
@@ -248,6 +262,13 @@ function syncBuyButtons(p) {
 }
 function drawHud() {
  const m = match(); const p = m.player;
+ if (!running && !DEMO_MODE) {
+  hud.wardenScore.textContent = "0"; hud.cinderScore.textContent = "0";
+  hud.wardenAlive.textContent = "0"; hud.cinderAlive.textContent = "0";
+  hud.phase.textContent = "STANDBY"; hud.clock.textContent = "0:00";
+  hud.objective.textContent = "AWAITING DEPLOY";
+  return;
+ }
  hud.wardenScore.textContent = String(m.score.warden); hud.cinderScore.textContent = String(m.score.cinder);
  hud.wardenAlive.textContent = String(m.aliveCount(TEAM.WARDEN));
  hud.cinderAlive.textContent = String(m.aliveCount(TEAM.CINDER));
@@ -692,8 +713,9 @@ for (const btn of buyButtons) btn.addEventListener("click", () => {
   hud.buyHint.textContent = DEFAULT_BUY_HINT;
  }, 1700); drawHud();
 });
-function cycleWeapon() {
- if (!running) return; if (match().switchWeapon(match().player, 1)) audio.uiClick(); else audio.deny();
+function selectSlot(slot) {
+ if (!running) return;
+ if (match().switchWeapon(match().player, slot)) audio.uiClick(); else audio.deny();
  drawHud();
 }
 function throwUtil(kind) {
