@@ -2,13 +2,6 @@ import { Group, Mesh, MeshStandardMaterial, BoxGeometry, SphereGeometry, Cylinde
 import { PALETTE, HEADSHOT_MULT } from "./config.js";
 const BOX = new BoxGeometry(1, 1, 1);
 new Matrix4;
-export const HITZONES = {
- head: { y0: 1.56, y1: 1.86, radius: 0.20, mult: HEADSHOT_MULT },
- torso: { y0: 1.06, y1: 1.56, radius: 0.31, mult: 1.0 },
- pelvis: { y0: 0.86, y1: 1.06, radius: 0.29, mult: 0.9 },
- legs: { y0: 0.0, y1: 0.86, radius: 0.30, mult: 0.72 },
- arms: { y0: 1.06, y1: 1.66, radius: 0.46, mult: 0.72 }
-};
 function matFor(team, role) {
  const accent = team === "warden" ? PALETTE.warden : PALETTE.cinder;
  const deep = team === "warden" ? PALETTE.wardenDeep : PALETTE.cinderDeep;

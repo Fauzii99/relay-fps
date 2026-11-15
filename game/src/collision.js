@@ -129,17 +129,3 @@ function slab(origin, dir, box, maxT) {
  if (tmin <= 0 || tmin > maxT) return null;
  return { t: tmin, x: origin.x + dir.x * tmin, y: origin.y + dir.y * tmin, z: origin.z + dir.z * tmin, nx: nx, ny: ny, nz: nz };
 }
-export function capsuleHit(ax, ay, az, bx, by, bz, dx, dy, dz, maxT, radius) {
- const ox = ax - bx; const oy = ay - by;
- const oz = az - bz; const A = dx * dx + dy * dy + dz * dz;
- if (A < 1e-9) return null; let t = -(ox * dx + oy * dy + oz * dz) / A;
- if (t < 0) t = 0; if (t > maxT) t = maxT;
- const px = ox + dx * t; const py = oy + dy * t;
- const pz = oz + dz * t; const segMin = Math.min(ay, by);
- const segMax = Math.max(ay, by); const worldY = by + py;
- const clampedY = worldY < segMin ? segMin : worldY > segMax ? segMax : worldY;
- const dy2 = worldY - clampedY; const d2 = px * px + dy2 * dy2 + pz * pz;
- if (d2 > radius * radius) return null; const back = Math.sqrt(Math.max(0, radius * radius - d2));
- const hitT = Math.max(0, t - back / Math.sqrt(A));
- return { t: hitT, y: ay + dy * hitT };
-}

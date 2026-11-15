@@ -21,6 +21,4 @@ export function createRng(seed) {
  };
 }
 export const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
-export const lerp = (a, b, t) => a + (b - a) * t;
-export const smoothstep = t => t * t * (3 - 2 * t);
 export const damp = (current, target, rate, dt) => current + (target - current) * (1 - Math.exp(-rate * dt));

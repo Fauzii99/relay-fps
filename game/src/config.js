@@ -1,8 +1,6 @@
 export const TICK = 1 / 60;
 export const MAX_STEPS = 5;
 export const TEAM = { WARDEN: "warden", CINDER: "cinder" };
-export const ROLE = { ATTACK: "attack", DEFEND: "defend" };
-export const PLAYER_TEAM = TEAM.WARDEN;
 export const PALETTE = {
 warden: 0x46d9c2, wardenDeep: 0x12866f, cinder: 0xff7a45,
 cinderDeep: 0xa8340f, concrete: 0x8d9298, concreteDark: 0x545a60,

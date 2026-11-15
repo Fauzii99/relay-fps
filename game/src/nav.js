@@ -1,8 +1,5 @@
 import { WAYPOINTS, NAV_EDGES } from "./map.js";
 const byId = new Map(WAYPOINTS.map(w => [ w.id, w ]));
-export function nodeById(id) {
- return byId.get(id) ?? null;
-}
 export function nodesNear(x, z, lane = null) {
  let best = null; let bestD = 1 / 0;
  for (const w of WAYPOINTS) {
@@ -15,9 +12,6 @@ export function nodesNear(x, z, lane = null) {
 }
 export function nearestNode(x, z, lane = null) {
  return nodesNear(x, z, lane);
-}
-export function laneNodes(lane) {
- return WAYPOINTS.filter(w => w.lane === lane);
 }
 const cache = new Map;
 export function findPath(startId, goalId) {
@@ -80,12 +74,4 @@ export function smoothPath(nodeIds, world, fromX, fromZ, fromY = 0) {
 }
 export function clearPathCache() {
  cache.clear();
-}
-export function pathLength(nodeIds) {
- let sum = 0;
- for (let i = 0; i + 1 < nodeIds.length; i++) {
-  const a = byId.get(nodeIds[i]); const b = byId.get(nodeIds[i + 1]);
-  if (a === void 0 || b === void 0) continue; sum += Math.hypot(b.x - a.x, b.z - a.z);
- }
- return sum;
 }
