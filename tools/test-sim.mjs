@@ -199,8 +199,10 @@ console.log('Relay 9 — simulation harness\n');
   f.weapon = 'rifle';
   f.ammo.rifle = 20;
   f.reserve.rifle = 30;
-  const ok = m.switchWeapon(f, 1);
-  check('slot 1 switches rifle → sidearm', ok === true && f.weapon === 'sidearm', f.weapon);
+  f.ammo.sidearm = 20;
+  f.reserve.sidearm = 60;
+  const ok = m.switchWeapon(f, 2);
+  check('slot 2 switches rifle → sidearm', ok === true && f.weapon === 'sidearm', f.weapon);
   const back = m.switchWeapon(f, 1);
   check('slot 1 switches back to the primary', back === true && f.weapon === 'rifle', f.weapon);
 }
@@ -524,6 +526,37 @@ console.log('Relay 9 — simulation harness\n');
   const far = damageAtRange(w, w.falloffEnd + 10);
   check('damage falls off with distance', near > mid && mid > far, `${near.toFixed(1)} > ${mid.toFixed(1)} > ${far.toFixed(1)}`);
   check('falloff bottoms out at the floor', Math.abs(far - w.damage * w.falloffMin) < 0.01, far.toFixed(2));
+}
+
+// 22. direct weapon slot switching (1 primary, 2 sidearm, 3 last owned) and determinism
+{
+  const m = new Match({ seed: 1337 });
+  const p = m.player;
+  // give the player a primary and sidearm so both slots resolve
+  p.ammo.rifle = 30; p.reserve.rifle = 90;
+  p.ammo.sidearm = 20; p.reserve.sidearm = 60;
+  p.weapon = "sidearm"; p.alive = true;
+  check('slot 1 selects the primary', m.switchWeapon(p, 1) === true && p.weapon === "rifle", p.weapon);
+  check('slot 2 selects the sidearm', m.switchWeapon(p, 2) === true && p.weapon === "sidearm", p.weapon);
+  check('slot 3 falls back to an owned weapon', m.switchWeapon(p, 3) === true && p.weapon !== "sidearm", p.weapon);
+  // empty slot: no ammo anywhere for the sidearm, so slot 2 must refuse
+  p.weapon = "rifle"; p.ammo.sidearm = 0; p.reserve.sidearm = 0;
+  check('slot 2 refuses when the sidearm is empty', m.switchWeapon(p, 2) === false && p.weapon === "rifle", p.weapon);
+  // a dead fighter can never switch
+  p.alive = false;
+  check('a dead fighter cannot switch slots', m.switchWeapon(p, 1) === false);
+  p.alive = true;
+  // switching must not disturb the simulation stream
+  const snap = () => {
+    const mm = new Match({ seed: 1337 });
+    mm.player.ammo.rifle = 30; mm.player.reserve.rifle = 90;
+    mm.player.ammo.sidearm = 20; mm.player.reserve.sidearm = 60;
+    mm.player.weapon = "sidearm";
+    mm.switchWeapon(mm.player, 1); mm.switchWeapon(mm.player, 2);
+    run(mm, 12);
+    return mm.fighters.map((f) => `${f.id}:${f.pos.x.toFixed(4)},${f.pos.z.toFixed(4)}:${f.health.toFixed(1)}:${f.weapon}`).join('|');
+  };
+  check('slot switching stays deterministic', snap() === snap());
 }
 
 console.log(results.join('\n'));
