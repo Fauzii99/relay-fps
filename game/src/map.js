@@ -1,9 +1,8 @@
-import { SITES, SPAWNS } from "./config.js";
-const S = (x1, z1, x2, z2, y1, kind = "wall", y0 = 0) => ({ x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2), y0: y0, y1: y1, kind: kind });
+import { SITES, SPAWNS} from "./config.js";
+const S = (x1, z1, x2, z2, y1, kind = "wall", y0 = 0) => ({ x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2), y0: y0, y1: y1, kind: kind});
 const boxes = text => text.trim().split("\n").map(row => {
  const [x1, z1, x2, z2, y1, y0 = 0, kind = "wall"] = row.split(" ");
- return { x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2), y0: +y0, y1: +y1, kind: kind };
-});
+ return { x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2), y0: +y0, y1: +y1, kind: kind};});
 
 const perimeter = boxes(`
 -41 -49 41 -47 9 0 wall
@@ -80,17 +79,15 @@ const pillars = boxes(`
 `);
 const catwalks = [ {
  id: "east",
- deck: { x1: 30, z1: -16, x2: 38, z2: 12, y: 3.3 },
- rail: [ { x1: 30, z1: -16, x2: 30.3, z2: 12, h: 1.1 }, { x1: 30, z1: -16, x2: 38, z2: -15.7, h: 1.1 } ],
- stairs: { x1: 30.4, z1: 12.4, x2: 34.0, z2: 16.0, steps: 11, rise: 0.3, run: 0.32, dir: "z" },
- sign: "CATWALK 1"
-}, {
+ deck: { x1: 30, z1: -16, x2: 38, z2: 12, y: 3.3},
+ rail: [ { x1: 30, z1: -16, x2: 30.3, z2: 12, h: 1.1}, { x1: 30, z1: -16, x2: 38, z2: -15.7, h: 1.1} ],
+ stairs: { x1: 30.4, z1: 12.4, x2: 34.0, z2: 16.0, steps: 11, rise: 0.3, run: 0.32, dir: "z"},
+ sign: "CATWALK 1"}, {
  id: "west",
- deck: { x1: -38, z1: -6, x2: -30, z2: 18, y: 3.3 },
- rail: [ { x1: -30.3, z1: -6, x2: -30, z2: 18, h: 1.1 }, { x1: -38, z1: 17.7, x2: -30, z2: 18, h: 1.1 } ],
- stairs: { x1: -34.6, z1: 18.4, x2: -30.6, z2: 22.0, steps: 11, rise: 0.3, run: 0.32, dir: "z" },
- sign: "CATWALK 2"
-} ];
+ deck: { x1: -38, z1: -6, x2: -30, z2: 18, y: 3.3},
+ rail: [ { x1: -30.3, z1: -6, x2: -30, z2: 18, h: 1.1}, { x1: -38, z1: 17.7, x2: -30, z2: 18, h: 1.1} ],
+ stairs: { x1: -34.6, z1: 18.4, x2: -30.6, z2: 22.0, steps: 11, rise: 0.3, run: 0.32, dir: "z"},
+ sign: "CATWALK 2"} ];
 export const props = `pipe -8.6 16 -8.2 43 4.6 0.34
 pipe 8.2 -25 8.6 3 4.9 0.3
 pipe 23.4 17 23.8 43 3.4 0.26
@@ -103,11 +100,10 @@ sign -10.4 42.4 0.32 MID
 sign 10.4 42.4 -0.32 A
 sign 0 -37.2 3.141592653589793 MID`.trim().split("\n").map(row => {
  const [kind, a, b, c, d, e, f] = row.split(" ");
- if (kind === "beacon") return { kind: kind, site: a, x: +b, z: +c };
- if (kind === "sign") return { kind: kind, x: +a, z: +b, ry: +c, text: d };
- if (kind === "tank") return { kind: kind, x: +a, z: +b, r: +c, h: +d };
- return { kind: kind, x1: +a, z1: +b, x2: +c, z2: +d, y: +e, r: +(f ?? 0) };
-});
+ if (kind === "beacon") return { kind: kind, site: a, x: +b, z: +c};
+ if (kind === "sign") return { kind: kind, x: +a, z: +b, ry: +c, text: d};
+ if (kind === "tank") return { kind: kind, x: +a, z: +b, r: +c, h: +d};
+ return { kind: kind, x1: +a, z1: +b, x2: +c, z2: +d, y: +e, r: +(f ?? 0)};});
 export const SOLIDS = [ ...perimeter, ...spineWalls, ...laneWalls, ...blocks, ...cover, ...pillars ];
 export const CATWALK_SOLIDS = [];
 for (const cw of catwalks) {
@@ -120,11 +116,9 @@ for (const cw of catwalks) {
   const t1 = (i + 1) / st.steps;
   const z1 = st.z1 + (st.z2 - st.z1) * t0;
   const z2 = st.z1 + (st.z2 - st.z1) * t1;
-  CATWALK_SOLIDS.push(S(st.x1, z1, st.x2, z2, st.rise * (st.steps - i), "stair", 0));
- }
-}
+  CATWALK_SOLIDS.push(S(st.x1, z1, st.x2, z2, st.rise * (st.steps - i), "stair", 0));}}
 export const ALL_SOLIDS = [ ...SOLIDS, ...CATWALK_SOLIDS ];
-const LANES = { s: "spawn", m: "mid", c: "cross", a: "A", b: "B", h: "high" };
+const LANES = { s: "spawn", m: "mid", c: "cross", a: "A", b: "B", h: "high"};
 const rows = text => text.trim().split("\n").map(row => row.split(" "));
 export const WAYPOINTS = rows(`
 s0 0 44 s
@@ -209,18 +203,16 @@ h2 32 10 h 3.3
 h3 -32 -2 h 3.3
 h4 -34 8 h 3.3
 h5 -32 16 h 3.3
-`).map(([ id, x, z, lane, y = 0, role = null ]) => ({ id: id, x: +x, z: +z, y: +y, lane: LANES[lane], role: role }));
+`).map(([ id, x, z, lane, y = 0, role = null ]) => ({ id: id, x: +x, z: +z, y: +y, lane: LANES[lane], role: role}));
 function buildEdges() {
  const edges = new Map;
  const link = (a, b) => {
   if (!edges.has(a)) edges.set(a, []);
   if (!edges.has(b)) edges.set(b, []);
   edges.get(a).push(b);
-  edges.get(b).push(a);
- };
+  edges.get(b).push(a);};
  const chain = (...ids) => {
-  for (let i = 0; i + 1 < ids.length; i++) link(ids[i], ids[i + 1]);
- };
+  for (let i = 0; i + 1 < ids.length; i++) link(ids[i], ids[i + 1]);};
  chain("s0", "s1", "s2");
  chain("s0", "m0", "m1", "m2", "m3", "m4", "m5", "x0");
  chain("x0", "x5", "x6", "n0", "n1", "n2", "n3", "n4", "n5", "c3", "c1", "c0");
@@ -248,8 +240,7 @@ function buildEdges() {
  chain("h3", "h4", "h5");
  chain("h2", "a3");
  chain("h5", "b3");
- return edges;
-}
+ return edges;}
 export const NAV_EDGES = buildEdges();
 export const COVER = rows(`
 cA1 26 -22.6 200 a
@@ -267,7 +258,7 @@ cE1 27.4 12.4 190 a
 cE2 36.2 4 176 a
 cW1 -31 0 176 b
 cW2 -36.6 -8 190 b
-`).map(([ id, x, z, face, lane ]) => ({ id: id, x: +x, z: +z, face: +face, lane: LANES[lane] }));
-export const SITE_PADS = [ { ...SITES.A, color: 0xffcf5c }, { ...SITES.B, color: 0xffcf5c } ];
-export const MAP_BOUNDS = { x1: -40, x2: 40, z1: -48, z2: 48 };
-export { SPAWNS };
+`).map(([ id, x, z, face, lane ]) => ({ id: id, x: +x, z: +z, face: +face, lane: LANES[lane]}));
+export const SITE_PADS = [ { ...SITES.A, color: 0xffcf5c}, { ...SITES.B, color: 0xffcf5c} ];
+export const MAP_BOUNDS = { x1: -40, x2: 40, z1: -48, z2: 48};
+export { SPAWNS};

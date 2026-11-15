@@ -4,7 +4,7 @@
 // victory and a full match restart. Run: node tools/test-sim.mjs
 
 import { Match } from '../game/src/sim.js';
-import { MOVE, MATCH, WEAPONS, TEAM, SQUAD } from '../game/src/config.js';
+import { MOVE, MATCH, WEAPONS, TEAM, SQUAD, SITES } from '../game/src/config.js';
 import { damageAtRange, raycastFighter } from '../game/src/combat.js';
 
 let pass = 0;
@@ -338,7 +338,7 @@ console.log('Relay 9 — simulation harness\n');
   m.defendingTeam = m.enemyTeam;
   m.plan = { site: 'A' };
   const p = m.player;
-  p.pos = { x: 22, y: 0, z: -30 };
+  p.pos = { x: SITES.A.center[0], y: 0, z: SITES.A.center[2] };
   p.plantHold = true;
   m.beacon.carrier = p.id;
   m.beacon.planted = false;
@@ -347,7 +347,7 @@ console.log('Relay 9 — simulation harness\n');
     m.step(1 / 60);
     if (m.beacon.planted && plantedAt === null) plantedAt = m.time;
     p.plantHold = true;
-    p.pos = { x: 22, y: 0, z: -30 };
+    p.pos = { x: SITES.A.center[0], y: 0, z: SITES.A.center[2] };
   }
   check('hold E on site A plants the beacon', m.beacon.planted === true, `planted=${m.beacon.planted}`);
   check('beacon records its site', m.beacon.site === 'A', String(m.beacon.site));
@@ -538,7 +538,16 @@ console.log('Relay 9 — simulation harness\n');
   p.weapon = "sidearm"; p.alive = true;
   check('slot 1 selects the primary', m.switchWeapon(p, 1) === true && p.weapon === "rifle", p.weapon);
   check('slot 2 selects the sidearm', m.switchWeapon(p, 2) === true && p.weapon === "sidearm", p.weapon);
-  check('slot 3 falls back to an owned weapon', m.switchWeapon(p, 3) === true && p.weapon !== "sidearm", p.weapon);
+  check('slot 3 selects the melee knife', m.switchWeapon(p, 3) === true && p.weapon === "knife", p.weapon);
+  // the knife is always owned: even a broke round-1 player can reach slot 3
+  p.weapon = "sidearm"; p.ammo.rifle = 0; p.reserve.rifle = 0; p.ammo.smg = 0; p.reserve.smg = 0;
+  p.ammo.knife = 1;
+  check('slot 3 works with no guns bought', m.switchWeapon(p, 3) === true && p.weapon === "knife", p.weapon);
+  const knifeBefore = p.ammo.knife;
+  m.phase = "live"; p.fireCooldown = 0; p.alive = true;
+  check('the knife strikes without ammo', m.tryFire(p) === true && p.ammo.knife === knifeBefore, knifeBefore);
+  m.phase = "buy";
+  p.ammo.rifle = 30; p.reserve.rifle = 90;
   // empty slot: no ammo anywhere for the sidearm, so slot 2 must refuse
   p.weapon = "rifle"; p.ammo.sidearm = 0; p.reserve.sidearm = 0;
   check('slot 2 refuses when the sidearm is empty', m.switchWeapon(p, 2) === false && p.weapon === "rifle", p.weapon);

@@ -1,18 +1,14 @@
-import { WAYPOINTS, NAV_EDGES } from "./map.js";
+import { WAYPOINTS, NAV_EDGES} from "./map.js";
 const byId = new Map(WAYPOINTS.map(w => [ w.id, w ]));
 export function nodesNear(x, z, lane = null) {
  let best = null; let bestD = 1 / 0;
  for (const w of WAYPOINTS) {
   if (lane !== null && w.lane !== lane) continue; const d = (w.x - x) * (w.x - x) + (w.z - z) * (w.z - z);
   if (d < bestD) {
-   bestD = d; best = w;
-  }
- }
- return best;
-}
+   bestD = d; best = w;}}
+ return best;}
 export function nearestNode(x, z, lane = null) {
- return nodesNear(x, z, lane);
-}
+ return nodesNear(x, z, lane);}
 const cache = new Map;
 export function findPath(startId, goalId) {
  if (startId === goalId) return [ startId ];
@@ -27,16 +23,13 @@ export function findPath(startId, goalId) {
   let bestIdx = 0;
   for (let i = 1; i < open.length; i++) {
    const fi = fScore.get(open[i]) ?? 1 / 0; const fb = fScore.get(open[bestIdx]) ?? 1 / 0;
-   if (fi < fb || fi === fb && open[i] < open[bestIdx]) bestIdx = i;
-  }
+   if (fi < fb || fi === fb && open[i] < open[bestIdx]) bestIdx = i;}
   const current = open.splice(bestIdx, 1)[0];
   if (current === goalId) {
    const path = [ current ]; let node = current;
    while (cameFrom.has(node)) {
-    node = cameFrom.get(node); path.unshift(node);
-   }
-   cache.set(key, path); return path;
-  }
+    node = cameFrom.get(node); path.unshift(node);}
+   cache.set(key, path); return path;}
   closed.add(current); const edges = NAV_EDGES.get(current) ?? [];
   for (const next of edges) {
    if (closed.has(next)) continue; const a = byId.get(current);
@@ -45,12 +38,8 @@ export function findPath(startId, goalId) {
    if (tentative < (gScore.get(next) ?? 1 / 0)) {
     cameFrom.set(next, current); gScore.set(next, tentative);
     fScore.set(next, tentative + Math.hypot(goal.x - b.x, goal.z - b.z));
-    if (!open.includes(next)) open.push(next);
-   }
-  }
- }
- cache.set(key, []); return [];
-}
+    if (!open.includes(next)) open.push(next);}}}
+ cache.set(key, []); return [];}
 export function smoothPath(nodeIds, world, fromX, fromZ, fromY = 0) {
  const pts = nodeIds.map(id => byId.get(id)).filter(n => n !== void 0); if (pts.length === 0) return [];
  const out = []; let cx = fromX;
@@ -62,16 +51,11 @@ export function smoothPath(nodeIds, world, fromX, fromZ, fromY = 0) {
    const p = pts[j]; const flat = Math.abs(p.y - cy) < 0.35;
    if (!flat) continue;
    if (world.lineOfSight(cx, cy + 0.85, cz, p.x, p.y + 0.85, p.z, b => b.y1 > p.y + 1.7)) {
-    chosen = j; break;
-   }
-  }
+    chosen = j; break;}}
   const p = pts[chosen];
-  out.push({ x: p.x, y: p.y, z: p.z, id: p.id });
+  out.push({ x: p.x, y: p.y, z: p.z, id: p.id});
   cx = p.x; cz = p.z;
-  cy = p.y; i = chosen + 1;
- }
- return out;
-}
+  cy = p.y; i = chosen + 1;}
+ return out;}
 export function clearPathCache() {
- cache.clear();
-}
+ cache.clear();}
