@@ -5,7 +5,7 @@ export const PALETTE = {
 warden: 0x46d9c2, wardenDeep: 0x12866f, cinder: 0xff7a45,
 cinderDeep: 0xa8340f, concrete: 0x8d9298, concreteDark: 0x545a60,
 metal: 0x6b7379, metalDark: 0x3b4247, hazard: 0xf2b23a,
-site: 0xffcf5c, fog: 0x2b3843, sky: 0x3a4a56,
+site: 0xffcf5c, fog: 0x8a5b45, sky: 0xc96b43,
  ember: 0xff5a2a
 };
 export const HEADSHOT_MULT = 2.5;
@@ -76,8 +76,8 @@ lossRewardMax: 2900, plantReward: 300, defuseReward: 300,
 };
 export const SITES = { A: { id: "A", label: "SITE A", center: [ 22, 0, -30 ], radius: 7.4, hex: 0x3fd9ff, lamp: 0x7fe4ff }, B: { id: "B", label: "SITE B", center: [ -24, 0, 26 ], radius: 7.4, hex: 0xffa832, lamp: 0xffbf5c } };
 export const SPAWNS = {
-warden: [ [ 0, 0.2, 46 ], [ 3.2, 0.2, 47.4 ], [ -3.2, 0.2, 47.4 ], [ 6.4, 0.2, 45.2 ], [ -6.4, 0.2, 45.2 ] ],
- cinder: [ [ 0, 0.2, -44 ], [ 3.2, 0.2, -45.4 ], [ -3.2, 0.2, -45.4 ], [ 6.4, 0.2, -43.2 ], [ -6.4, 0.2, -43.2 ] ]
+warden: [ [ 0, 0.2, 44.2 ], [ 3.6, 0.2, 43.4 ], [ -3.6, 0.2, 43.4 ], [ 6.8, 0.2, 41.6 ], [ -6.8, 0.2, 41.6 ] ],
+ cinder: [ [ 0, 0.2, -42.2 ], [ 3.6, 0.2, -41.4 ], [ -3.6, 0.2, -41.4 ], [ 6.8, 0.2, -39.6 ], [ -6.8, 0.2, -39.6 ] ]
 };
 export const MOVE = {
 walkSpeed: 9.4, duckSpeed: 4.3, airSpeed: 9.4,

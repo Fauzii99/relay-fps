@@ -151,7 +151,8 @@ export class Match {
   for (const f of this.fighters) {
    const spawns = f.team === TEAM.WARDEN ? wardenSpawn : cinderSpawn;
    const s = spawns[slotOf[f.team]++ % spawns.length];
-   f.pos = { x: s[0], y: s[1], z: s[2] };
+   const clear = this.world.resolve(s[0], s[2], MOVE.radius + 0.5, 0, MOVE.standHeight, MOVE.stepHeight);
+   f.pos = { x: clear.x, y: s[1], z: clear.z };
    f.vel = { x: 0, y: 0, z: 0 };
    f.alive = true; f.health = MOVE.maxHealth;
    f.armor = f.hasKevlar ? 100 : 0; f.crouch = 0;
@@ -227,7 +228,25 @@ export class Match {
    return;
   }
   this.updateBots(dt, true); this.updateBeacon(dt);
+  this.pushOutOfSolids();
   this.updateProjectiles(dt); this.checkRoundEnd();
+ }
+ pushOutOfSolids() {
+  const solve = f => {
+   const solved = this.world.resolve(f.pos.x, f.pos.z, MOVE.radius, f.pos.y, f.crouch > 0.5 ? MOVE.crouchHeight : MOVE.standHeight, MOVE.stepHeight);
+   f.pos.x = solved.x; f.pos.z = solved.z;
+  };
+  for (const f of this.fighters) solve(f);
+  for (let pass = 0; pass < 2; pass++) {
+   for (const f of this.fighters) for (const o of this.fighters) {
+    if (o === f || !o.alive || !f.alive) continue;
+    const dx = f.pos.x - o.pos.x, dz = f.pos.z - o.pos.z, d = Math.hypot(dx, dz);
+    const want = MOVE.radius * 2 + 0.1;
+    if (d > want || d < 1e-5) continue;
+    const push = (want - d) * 0.5; f.pos.x += dx / d * push; f.pos.z += dz / d * push;
+   }
+   for (const f of this.fighters) solve(f);
+  }
  }
  pruneEffects(dt) {
   for (let i = this.tracers.length - 1; i >= 0; i--) {

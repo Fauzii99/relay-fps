@@ -1,5 +1,5 @@
 import { BoxGeometry, CylinderGeometry, Mesh, MeshStandardMaterial, Group, DirectionalLight, HemisphereLight, AmbientLight, PointLight, Fog, PlaneGeometry, DoubleSide, MeshBasicMaterial, CircleGeometry, TorusGeometry, SpotLight, BufferGeometry, BufferAttribute, Points, PointsMaterial, SphereGeometry, BackSide, Color, InstancedMesh, Matrix4 } from "three";
-import { surfaceMaps, stencilTexture, emitterTexture, panelGlowTexture } from "./textures.js";
+import { surfaceMaps, stencilTexture, emitterTexture, panelGlowTexture, makeSign } from "./textures.js";
 import { SOLIDS, CATWALK_SOLIDS, props, SITE_PADS, MAP_BOUNDS, WAYPOINTS } from "./map.js";
 import { PALETTE } from "./config.js";
 const UNIT_BOX = new BoxGeometry(1, 1, 1);
@@ -32,34 +32,44 @@ export class World {
   this.time = 0; this.buildMaterials();
   this.buildLights(); this.buildGeometry();
   this.buildProps(); this.buildSites();
+  this.buildSigns();
   this.buildSkybox();
+ }
+ buildSigns() {
+  const plates = [
+   [ "SITE A", 22, -20.6, 0 ], [ "SITE B", -24, 16.6, Math.PI ],
+   [ "MID", -6.4, 6, Math.PI / 2 ], [ "SPAWN", 0, 42, Math.PI ] ];
+  for (const [ label, x, z, ry ] of plates) {
+   const plate = new Mesh(new PlaneGeometry(4.2, 1.05), new MeshBasicMaterial({ map: makeSign(label), transparent: true }));
+   plate.position.set(x, 3.15, z); plate.rotation.y = ry; this.group.add(plate);
+  }
  }
  buildMaterials() {
   const concrete = surfaceMaps("concrete"), steel = surfaceMaps("steel"), hazard = surfaceMaps("hazard"), deck = surfaceMaps("deck");
   const std = (set, look) => new MeshStandardMaterial({ map: set.map, normalMap: set.normalMap, roughnessMap: set.roughnessMap, ...look });
   const teal = emitterTexture("#46d9c2");
   this.mats = {
-   wall: std(concrete, { color: 0xa9b0b6, roughness: 0.94, metalness: 0.03 }),
-   block: std(steel, { color: 0x8f979d, roughness: 0.58, metalness: 0.55 }),
-   crate: std(steel, { color: 0x9a7f56, roughness: 0.78, metalness: 0.24 }),
-   barrier: std(hazard, { color: 0xffffff, roughness: 0.72, metalness: 0.18 }),
-   pillar: std(steel, { color: 0x767f86, roughness: 0.44, metalness: 0.72 }),
-   deck: std(deck, { color: 0x9aa2a8, roughness: 0.64, metalness: 0.42 }),
-   stair: std(deck, { color: 0x8d959b, roughness: 0.7, metalness: 0.36 }),
-   rail: std(steel, { color: 0xb7bfc4, roughness: 0.36, metalness: 0.85 }),
-   pipe: std(steel, { color: 0x7d868c, roughness: 0.42, metalness: 0.78 }),
-   tank: std(steel, { color: 0x6f7b82, roughness: 0.5, metalness: 0.62 }),
-   trim: new MeshStandardMaterial({ color: 0x2d353a, roughness: 0.5, metalness: 0.6 }),
+   wall: std(concrete, { color: 0xc89e72, roughness: 0.94, metalness: 0.03 }),
+   block: std(steel, { color: 0xa8815c, roughness: 0.58, metalness: 0.38 }),
+   crate: std(steel, { color: 0x7a4b2a, roughness: 0.82, metalness: 0.14 }),
+   barrier: std(hazard, { color: 0xffe8c8, roughness: 0.72, metalness: 0.18 }),
+   pillar: std(steel, { color: 0x8d6b4d, roughness: 0.44, metalness: 0.62 }),
+   deck: std(deck, { color: 0xb08a62, roughness: 0.64, metalness: 0.34 }),
+   stair: std(deck, { color: 0xa07c58, roughness: 0.7, metalness: 0.3 }),
+   rail: std(steel, { color: 0xc9a884, roughness: 0.36, metalness: 0.8 }),
+   pipe: std(steel, { color: 0x94714f, roughness: 0.42, metalness: 0.72 }),
+   tank: std(steel, { color: 0x8a6746, roughness: 0.5, metalness: 0.58 }),
+   trim: new MeshStandardMaterial({ color: 0x3a2517, roughness: 0.5, metalness: 0.55 }),
    emitter: new MeshStandardMaterial({ map: teal, emissiveMap: teal, emissive: new Color(0x2ad8bc), emissiveIntensity: 1.6, roughness: 0.34, metalness: 0.5 }),
    sign: new MeshStandardMaterial({ map: panelGlowTexture(), emissiveMap: panelGlowTexture(), emissive: new Color(0x39c9c4), emissiveIntensity: 1.1, roughness: 0.4, metalness: 0.3 }),
-   hazard: std(hazard, { color: 0xffffff, roughness: 0.8, metalness: 0.12 }),
-   floor: std({ map: deck.map.clone(), normalMap: deck.normalMap.clone(), roughnessMap: deck.roughnessMap.clone() }, { color: 0xb3bbc1, roughness: 0.9, metalness: 0.08 })
+   hazard: std(hazard, { color: 0xffe8c8, roughness: 0.8, metalness: 0.12 }),
+   floor: std({ map: deck.map.clone(), normalMap: deck.normalMap.clone(), roughnessMap: deck.roughnessMap.clone() }, { color: 0xc9a882, roughness: 0.9, metalness: 0.08 })
   };
   for (const t of [ this.mats.floor.map, this.mats.floor.normalMap, this.mats.floor.roughnessMap ]) t.repeat.set(18, 22);
  }
  buildLights() {
-  const scene = this.scene; scene.fog = new Fog(PALETTE.fog, 34, 168);
-  scene.background = new Color(PALETTE.sky); const key = new DirectionalLight(0xfff4e4, 5.4);
+  const scene = this.scene; scene.fog = new Fog(PALETTE.fog, 46, 190);
+  scene.background = new Color(PALETTE.sky); const key = new DirectionalLight(0xffdfb8, 5.6);
   key.position.set(-38, 62, 44); key.target.position.set(2, 0, -4);
   key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
   key.shadow.camera.left = -58; key.shadow.camera.right = 58;
@@ -68,8 +78,8 @@ export class World {
   key.shadow.bias = -0.0006; key.shadow.normalBias = 0.028;
   key.shadow.radius = 1.5; scene.add(key);
   scene.add(key.target); this.key = key;
-  const hemi = new HemisphereLight(0xcfe8ff, 0x5b6d7c, 1.05); scene.add(hemi);
-  scene.add(new AmbientLight(0xa8bccb, 0.22)); const rim = new DirectionalLight(0xff8f4a, 1.6);
+  const hemi = new HemisphereLight(0xffd9b0, 0x6b4a3a, 1.15); scene.add(hemi);
+  scene.add(new AmbientLight(0xd9a888, 0.3)); const rim = new DirectionalLight(0xff8f4a, 1.5);
   rim.position.set(34, 30, -60); rim.target.position.set(0, 0, -10);
   scene.add(rim); scene.add(rim.target);
   for (const site of SITE_PADS) {
@@ -138,7 +148,7 @@ export class World {
    const post = boxMesh(this.mats.trim, p.x - 0.07, 0, p.z - 0.07, p.x + 0.07, 2.4, p.z + 0.07); g.add(post);
    const panel = new Mesh(new PlaneGeometry(2.2, 0.72), this.mats.sign); panel.position.set(p.x, 2.66, p.z);
    panel.rotation.y = p.ry; g.add(panel);
-   const stencil = new Mesh(new PlaneGeometry(2.2, 0.72), new MeshBasicMaterial({ map: stencilTexture(p.text, "#dff8f4"), transparent: true, side: DoubleSide, depthWrite: false }));
+   const stencil = new Mesh(new PlaneGeometry(2.2, 0.72), new MeshBasicMaterial({ map: stencilTexture(p.text, "#dff8f4"), transparent: true, depthWrite: false }));
    stencil.position.set(p.x, 2.66, p.z); stencil.rotation.y = p.ry;
    stencil.translateZ(0.012); g.add(stencil);
   }

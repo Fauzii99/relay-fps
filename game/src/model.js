@@ -73,15 +73,6 @@ export class FighterModel {
   this.chest.add(this.head); const dome = new Mesh(new SphereGeometry(0.175, 14, 11), m.plate);
   dome.scale.set(1.0, 1.05, 1.06); dome.castShadow = true;
   this.head.add(dome);
-  const rimMat = new MeshBasicMaterial({ color: team === "warden" ? 0x5cffe0 : 0xff9433, wireframe: true, transparent: true, opacity: 0.42, toneMapped: false, depthWrite: false });
-  const domeRim = new Mesh(new SphereGeometry(0.175, 8, 6), rimMat);
-  domeRim.scale.set(1.16, 1.21, 1.22); this.head.add(domeRim);
-  const torsoRim = new Mesh(BOX, rimMat);
-  torsoRim.scale.set(0.5, 0.49, 0.35); torsoRim.position.set(0, 0.2, 0);
-  this.chest.add(torsoRim);
-  const pelvisRim = new Mesh(BOX, rimMat);
-  pelvisRim.scale.set(0.42, 0.3, 0.32); pelvisRim.position.set(0, 0.95, 0);
-  this.body.add(pelvisRim);
   const visor = new Mesh(new SphereGeometry(0.163, 16, 10, Math.PI * 0.62, Math.PI * 0.76, Math.PI * 0.34, Math.PI * 0.4), m.visor);
   visor.position.set(0, 0.004, 0); this.head.add(visor);
   boxPart(m.deep, 0.2, 0.05, 0.2, 0, -0.13, 0.02, this.head);
@@ -121,11 +112,11 @@ export class FighterModel {
   for (const arm of this.arms) {
    const s = arm.side;
    if (s > 0) {
-    arm.shoulder.rotation.x = -0.72 - aimLift * 0.62 - this.recoilKick * 0.16;
-    arm.shoulder.rotation.z = -0.16 - aimLift * 0.1; arm.elbow.rotation.x = aimLift * 0.28 - 1.02;
+    arm.shoulder.rotation.x = 0.72 + aimLift * 0.62 + this.recoilKick * 0.16;
+    arm.shoulder.rotation.z = -0.16 - aimLift * 0.1; arm.elbow.rotation.x = 1.02 - aimLift * 0.28;
    } else {
-    arm.shoulder.rotation.x = -1.02 - aimLift * 0.5 - this.recoilKick * 0.12;
-    arm.shoulder.rotation.z = 0.34 + aimLift * 0.24; arm.elbow.rotation.x = aimLift * 0.2 - 0.86;
+    arm.shoulder.rotation.x = 1.02 + aimLift * 0.5 + this.recoilKick * 0.12;
+    arm.shoulder.rotation.z = 0.34 + aimLift * 0.24; arm.elbow.rotation.x = 0.86 - aimLift * 0.2;
    }
    arm.shoulder.rotation.y = 0.1 * -s;
   }

@@ -224,3 +224,14 @@ export function panelGlowTexture() {
   for (let y = 8; y < 128; y += 9) line(ctx, 6, y, 122, y);
  }, true);
 }
+export function makeSign(label, tint = "#f4e2c6", accent = "#3a2517") {
+ return textureOf(`sign:${label}:${tint}`, 256, (ctx) => {
+  ctx.fillStyle = tint; ctx.fillRect(0, 0, 256, 64);
+  ctx.strokeStyle = accent; ctx.lineWidth = 4; ctx.strokeRect(3, 3, 250, 58);
+  ctx.fillStyle = accent; ctx.font = "bold 34px monospace";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(label, 128, 34);
+  ctx.globalAlpha = 0.22;
+  for (let i = 0; i < 30; i++) ctx.fillRect((i * 37) % 256, (i * 53) % 64, 5, 2);
+  ctx.globalAlpha = 1;
+ }, true);
+}
