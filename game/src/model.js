@@ -1,4 +1,4 @@
-import { Group, Mesh, MeshStandardMaterial, BoxGeometry, SphereGeometry, CylinderGeometry, ConeGeometry, Color, MeshBasicMaterial, TorusGeometry, CircleGeometry, PointLight, InstancedMesh, Matrix4 } from "three";
+import {Group,Mesh,MeshStandardMaterial,BoxGeometry,SphereGeometry,CylinderGeometry,ConeGeometry,Color,MeshBasicMaterial,TorusGeometry,CircleGeometry,PointLight,InstancedMesh,Matrix4} from "three";
 import { PALETTE, HEADSHOT_MULT } from "./config.js";
 const BOX = new BoxGeometry(1, 1, 1);
 new Matrix4;
@@ -20,13 +20,6 @@ function boxPart(material, w, h, d, x, y, z, parent) {
  const mesh = new Mesh(BOX, material); mesh.scale.set(w, h, d);
  mesh.position.set(x, y, z); mesh.castShadow = true;
  mesh.receiveShadow = true; parent.add(mesh);
- return mesh;
-}
-const rimGeo = new BoxGeometry(1, 1, 1);
-function rimPart(material, w, h, d, x, y, z, parent) {
- const mesh = new Mesh(rimGeo, material); mesh.scale.set(w, h, d);
- mesh.position.set(x, y, z); mesh.castShadow = false;
- mesh.receiveShadow = false; parent.add(mesh);
  return mesh;
 }
 function heldRifle(mats) {

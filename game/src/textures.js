@@ -1,4 +1,4 @@
-import { CanvasTexture, RepeatWrapping, SRGBColorSpace, NoColorSpace } from "three";
+import {CanvasTexture,RepeatWrapping,SRGBColorSpace,NoColorSpace} from "three";
 const cache = new Map();
 const rngOf = seed => () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
 function textureOf(key, size, paint, srgb) {
