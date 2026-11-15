@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RELAY 9 — Aster Wardens vs Cinder Pact</title>
+<link rel="stylesheet" href="src/style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.min.js" } }
+</script>
+</head>
+<body>
+<div id="app">
+  <canvas id="view" aria-label="Game view"></canvas>
+
+  <!-- ===== top bar: score, phase, clock, alive ===== -->
+  <header id="topbar" class="hud">
+    <div class="team-block team-warden">
+      <span class="team-name">ASTER WARDENS</span>
+      <span class="team-score" id="score-warden">0</span>
+      <span class="team-alive" id="alive-warden">5</span>
+    </div>
+    <div class="clock-block">
+      <div id="phase-label">BUY PHASE</div>
+      <div id="clock">1:45</div>
+      <div id="objective-state">BEACON SECURE</div>
+    </div>
+    <div class="team-block team-cinder">
+      <span class="team-alive" id="alive-cinder">5</span>
+      <span class="team-score" id="score-cinder">0</span>
+      <span class="team-name">CINDER PACT</span>
+    </div>
+  </header>
+
+  <!-- ===== minimap ===== -->
+  <section id="minimap-wrap" class="hud">
+    <canvas id="minimap" width="196" height="196"></canvas>
+    <div id="minimap-legend">
+      <span class="key site-a">A</span><span class="key site-b">B</span>
+      <span class="legend-label">RELAY 9</span>
+    </div>
+  </section>
+
+  <!-- ===== killfeed + radio ===== -->
+  <section id="feed-wrap" class="hud">
+    <ol id="killfeed" aria-live="polite"></ol>
+  </section>
+  <section id="radio-wrap" class="hud">
+    <ul id="radio" aria-live="polite"></ul>
+  </section>
+
+  <!-- ===== bottom left: vitals ===== -->
+  <section id="vitals" class="hud">
+    <div class="vital-row">
+      <span class="vital-label">HP</span>
+      <div class="bar"><i id="hp-bar"></i></div>
+      <span class="vital-num" id="hp-num">100</span>
+    </div>
+    <div class="vital-row">
+      <span class="vital-label">AR</span>
+      <div class="bar armor"><i id="armor-bar"></i></div>
+      <span class="vital-num" id="armor-num">0</span>
+    </div>
+    <div id="utility-row">
+      <span class="slot" id="slot-smoke">SMOKE <b>1</b></span>
+      <span class="slot" id="slot-frag">FRAG <b>1</b></span>
+    </div>
+  </section>
+
+  <!-- ===== bottom right: weapon + money ===== -->
+  <section id="weapon-panel" class="hud">
+    <div id="weapon-name">VK-7 LANCER</div>
+    <div id="ammo-row">
+      <span id="ammo-mag">30</span><span id="ammo-sep">/</span><span id="ammo-reserve">90</span>
+    </div>
+    <div id="money-row"><span class="cur">₡</span><span id="money">800</span></div>
+  </section>
+
+  <!-- ===== center: dynamic crosshair ===== -->
+  <div id="crosshair" class="hud" aria-hidden="true">
+    <svg viewBox="-32 -32 64 64" width="64" height="64">
+      <g id="ch-lines" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line id="ch-t" x1="0" y1="-4" x2="0" y2="-14"></line>
+        <line id="ch-b" x1="0" y1="4" x2="0" y2="14"></line>
+        <line id="ch-l" x1="-4" y1="0" x2="-14" y2="0"></line>
+        <line id="ch-r" x1="4" y1="0" x2="14" y2="0"></line>
+      </g>
+      <circle id="ch-dot" cx="0" cy="0" r="1.2" fill="currentColor"></circle>
+    </svg>
+    <svg id="hit-marker" viewBox="-16 -16 32 32" width="32" height="32">
+      <g stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <line x1="-11" y1="-11" x2="-4" y2="-4"></line><line x1="11" y1="-11" x2="4" y2="-4"></line>
+        <line x1="-11" y1="11" x2="-4" y2="4"></line><line x1="11" y1="11" x2="4" y2="4"></line>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ===== projectile / damage feedback ===== -->
+  <div id="damage-arc" class="hud" aria-hidden="true"></div>
+  <div id="kill-banner" class="hud"></div>
+
+  <!-- ===== buy menu ===== -->
+  <section id="buy-menu" class="overlay" hidden>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>REQUISITION · BUY PHASE</h2>
+        <div class="buy-money">FUNDS <b>₡<span id="buy-money">800</span></b></div>
+        <div class="buy-timer">CLOSES <b id="buy-timer">0:15</b></div>
+      </div>
+      <div class="buy-grid">
+        <div class="buy-col">
+          <h3>SIDEARM</h3>
+          <button class="buy-item" data-item="sidearm"><span class="bi-name">CQ-9 TAP</span><span class="bi-cost">FREE</span><span class="bi-meta">pistol · 20 rnd</span></button>
+          <h3>PRIMARY</h3>
+          <button class="buy-item" data-item="smg"><span class="bi-name">RASP-4 NEEDLER</span><span class="bi-cost">₡1250</span><span class="bi-meta">smg · 30 rnd · fast</span></button>
+          <button class="buy-item" data-item="rifle"><span class="bi-name">VK-7 LANCER</span><span class="bi-cost">₡2100</span><span class="bi-meta">rifle · 30 rnd · 2-shot head</span></button>
+          <button class="buy-item" data-item="marksman"><span class="bi-name">HR-3 SENTINEL</span><span class="bi-cost">₡3200</span><span class="bi-meta">marksman · 10 rnd · one-shot head</span></button>
+        </div>
+        <div class="buy-col">
+          <h3>ARMOUR</h3>
+          <button class="buy-item" data-item="kevlar"><span class="bi-name">KEVLAR VEST</span><span class="bi-cost">₡650</span><span class="bi-meta">armour 100 · absorbs 50%</span></button>
+          <h3>UTILITY</h3>
+          <button class="buy-item" data-item="smoke"><span class="bi-name">VEIL SMOKE</span><span class="bi-cost">₡300</span><span class="bi-meta">blocks sight · 18 s</span></button>
+          <button class="buy-item" data-item="frag"><span class="bi-name">SPLIT FRAG</span><span class="bi-cost">₡300</span><span class="bi-meta">90 max · falls off</span></button>
+        </div>
+      </div>
+      <div class="panel-foot"><span id="buy-hint">B closes · click an item</span></div>
+    </div>
+  </section>
+
+  <!-- ===== start / pause / help ===== -->
+  <section id="start-screen" class="overlay">
+    <div class="panel start">
+      <h1>RELAY 9</h1>
+      <p class="sub">Orbital relay station · <b class="team-warden">ASTER WARDENS</b> vs <b class="team-cinder">CINDER PACT</b></p>
+      <p class="brief">Four against four. Plant the resonance beacon on A or B, hold it until it detonates, or wipe the other squad. Fifteen seconds of buy phase, first to five rounds.</p>
+      <div class="controls-grid">
+        <div><kbd>W A S D</kbd> move</div><div><kbd>MOUSE</kbd> look · <kbd>LMB</kbd> fire</div>
+        <div><kbd>SHIFT</kbd> walk</div><div><kbd>CTRL</kbd> crouch</div>
+        <div><kbd>SPACE</kbd> jump</div><div><kbd>R</kbd> reload</div>
+        <div><kbd>1 2 3</kbd> weapon</div><div><kbd>4 5</kbd> smoke / frag</div>
+        <div><kbd>B</kbd> buy menu</div><div><kbd>E</kbd> hold to plant / defuse</div>
+        <div><kbd>ESC</kbd> pause</div><div><kbd>M</kbd> mute</div>
+      </div>
+      <button id="start-btn" class="primary">DEPLOY</button>
+      <p class="tiny">Click deploys and locks the mouse. Press ESC to release it.</p>
+    </div>
+  </section>
+
+  <section id="pause-screen" class="overlay" hidden>
+    <div class="panel start">
+      <h2>PAUSED</h2>
+      <p class="sub" id="pause-note">Mouse released. The squad holds position.</p>
+      <button id="resume-btn" class="primary">RESUME</button>
+      <button id="restart-btn" class="ghost">RESTART MATCH</button>
+      <p class="tiny">M toggles sound · ESC returns to the fight</p>
+    </div>
+  </section>
+
+  <section id="match-end" class="overlay" hidden>
+    <div class="panel start">
+      <h2 id="match-end-title">MATCH OVER</h2>
+      <p class="sub" id="match-end-line"></p>
+      <button id="again-btn" class="primary">PLAY AGAIN</button>
+    </div>
+  </section>
+
+  <div id="center-toast" class="hud" aria-live="polite"></div>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
