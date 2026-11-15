@@ -1,5 +1,5 @@
 import { Scene, PerspectiveCamera, WebGLRenderer, Vector3, PointLight, SphereGeometry, MeshBasicMaterial, Mesh, Sprite, SpriteMaterial, AdditiveBlending, BufferGeometry, BufferAttribute, LineSegments, LineBasicMaterial, CanvasTexture, PCFShadowMap, SRGBColorSpace, ACESFilmicToneMapping } from "three";
-import { TICK, MAX_STEPS, TEAM, WEAPONS, MOVE, MATCH, SITES, SHOTS, DEMO, KEYS } from "./config.js";
+import { TICK, MAX_STEPS, TEAM, WEAPONS, MOVE, MATCH, SITES, SHOTS, SHOT_SPOTS, DEMO, KEYS } from "./config.js";
 import { Match } from "./sim.js";
 import { World } from "./world.js";
 import { FighterModel, ViewModel } from "./model.js";
@@ -11,7 +11,7 @@ const DEMO_MODE = params.get("demo") === "1";
 const AUTOSTART = DEMO_MODE || params.get("autostart") === "1";
 const SEED = Number(params.get("seed") ?? DEMO.seed) || DEMO.seed;
 const SHOT = params.get("shot");
-const SHOT_SPEC = SHOT !== null && Object.hasOwn(SHOTS, SHOT) ? SHOTS[SHOT] : null;
+const SHOT_SPEC = SHOT !== null && Object.hasOwn(SHOTS, SHOT) ? { ...SHOTS[SHOT], simSeconds: Number(params.get("t") ?? SHOTS[SHOT].simSeconds) } : null;
 const canvas = document.getElementById("view");
 const renderer = new WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance", stencil: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -52,6 +52,7 @@ const engine = {
 let running = false;
 const match = () => engine.match;
 engine.match = new Match({ seed: SEED, demo: DEMO_MODE });
+seedDemoState(engine.match);
 const $ = id => document.getElementById(id);
 const hud = {
  wardenScore: $("score-warden"),
@@ -667,6 +668,8 @@ function updateBodies(dt) {
  }
 }
 let demoTarget = 0;
+let demoBought = false;
+let demoPlaced = false;
 function nearestEnemy(p) {
  let best = null;
  let bestD = 1 / 0;
@@ -686,11 +689,40 @@ const wrapPi = a => {
  while (d < -Math.PI) d += Math.PI * 2;
  return d;
 };
+function seedDemoState(m) {
+ if (!DEMO_MODE) return;
+ m.player.money = 4500;
+}
+function placeDemoPlayer(p) {
+ const num = (key, fallback) => {
+  const v = Number(params.get(key));
+  return Number.isFinite(v) && params.get(key) !== null ? v : fallback;
+ };
+ const spot = SHOT_SPOTS[SHOT_SPEC.mode] ?? [ 0, 33, 0, 12 ];
+ const px = num("px", spot[0]), pz = num("pz", spot[1]);
+ const tx = num("tx", spot[2]), tz = num("tz", spot[3]);
+ p.pos = { x: px, y: 0, z: pz };
+ p.vel = { x: 0, y: 0, z: 0 };
+ p.yaw = Math.atan2(-(tx - px), -(tz - pz));
+ p.pitch = num("pitch", 0);
+}
 function demoDrive() {
  const m = match();
  const p = m.player;
  input.fire=false; input.fireHeld=false;
- if(m.phase==='buy') { input.forward=false; return; }
+ if (DEMO_MODE && p.ammo[p.weapon] === 0 && !p.reloading) pendingReload = true;
+ if(m.phase==='buy') {
+  input.forward=false;
+  if (DEMO_MODE && !demoBought) {
+   demoBought = true;
+   for (const item of DEMO.buyList) m.buy(p, item);
+  }
+  return;
+ }
+ if (SHOT_SPEC !== null && SHOT_SPEC.mode !== "buy" && !demoPlaced) {
+  demoPlaced = true;
+  placeDemoPlayer(p);
+ }
  if (!p.alive) {
   input.fire = false;
   input.forward = false;
@@ -708,7 +740,7 @@ function demoDrive() {
   if(p.ammo[p.weapon]===0)pendingReload=true;
   return;
  }
- const path = DEMO.waypoints;
+ const path = SHOT_SPEC !== null ? [] : DEMO.waypoints;
  while (demoTarget < path.length) {
   const [tx, tz] = path[demoTarget];
   if (Math.hypot(p.pos.x - tx, p.pos.z - tz) < 2.4) demoTarget++; else break;
@@ -725,6 +757,19 @@ function demoDrive() {
   return;
  }
  input.forward = false;
+ if (SHOT_SPEC !== null && SHOT_SPEC.mode === "site") {
+  const c = SITES.B.center;
+  const sx = c[0] - p.pos.x, sz = c[2] - p.pos.z;
+  const sd = Math.hypot(sx, sz);
+  const yaw = Math.atan2(-sx, -sz);
+  const pitch = Math.atan2(0.9 - (p.pos.y + MOVE.eyeStand - p.crouch * 0.42), sd);
+  input.crouch = true;
+  input.fire = false;
+  input.use = true;
+  input.mouseDX = 300 * -wrapPi(yaw - p.yaw);
+  input.mouseDY = 300 * -wrapPi(pitch - p.pitch);
+  return;
+ }
  const enemy = nearestEnemy(p);
  if (enemy === null) {
   input.fire = false;
@@ -784,8 +829,11 @@ function rebuildBodies() {
 }
 function restart() {
  engine.match = new Match({ seed: SEED, demo: DEMO_MODE });
+ seedDemoState(engine.match);
  engine.match.onEvent = onEvent;
  demoTarget = 0;
+ demoBought = false;
+ demoPlaced = false;
  engine.accumulator = 0;
  engine.shotFrozen = false;
  engine.shakeT = 0;
@@ -929,6 +977,11 @@ function freezeForCapture() {
    aliveWarden: m.aliveCount(TEAM.WARDEN),
    aliveCinder: m.aliveCount(TEAM.CINDER),
    beaconPlanted: m.beacon.planted,
+   pos: { x: Number(m.player.pos.x.toFixed(2)), y: Number(m.player.pos.y.toFixed(2)), z: Number(m.player.pos.z.toFixed(2)) },
+   yaw: Number(m.player.yaw.toFixed(3)),
+   pitch: Number(m.player.pitch.toFixed(3)),
+   demoTarget: demoTarget,
+   siteDist: Number(Math.hypot(SITES.B.center[0] - m.player.pos.x, SITES.B.center[2] - m.player.pos.z).toFixed(2)),
    pixel: readCentre(),
    calls: renderer.info.render.calls,
    triangles: renderer.info.render.triangles

@@ -198,10 +198,10 @@ export const BOT = {
 export const SHOTS = {
  buy: { simSeconds: 4.2, mode: "buy" },
  combat: { simSeconds: 23.5, mode: "combat" },
- site: { simSeconds: 47.5, mode: "site" },
- hud: { simSeconds: 61.0, mode: "hud" }
+ site: { simSeconds: 30.0, mode: "site" }
 };
-export const DEMO = { seed: 1337, waypoints: [ [ 0, 36 ], [ -4.6, 33 ], [ 4.4, 28 ], [ 0, 24 ], [ -3.4, 20 ], [ 3.2, 16 ], [ 0, 11 ], [ -8.4, 10 ], [ -16, 4 ], [ -31, 6 ], [ -36, 12 ], [ -30, 18 ], [ -26, 24 ] ] };
+export const SHOT_SPOTS = { combat: [ 2, 33, 0, 12 ], site: [ -26, 31, -8, 18 ] };
+export const DEMO = { seed: 1337, waypoints: [ [ 0, 36 ], [ -4.6, 33 ], [ 4.4, 28 ], [ 0, 24 ], [ -3.4, 20 ], [ 3.2, 16 ], [ 0, 11 ], [ -8.4, 10 ], [ -16, 4 ], [ -31, 6 ], [ -36, 12 ], [ -30, 18 ], [ -26, 24 ] ], buyList: [ "kevlar", "rifle", "frag", "smoke" ] };
 export const KEYS = {
  forward: [ "KeyW", "ArrowUp" ],
  back: [ "KeyS", "ArrowDown" ],
