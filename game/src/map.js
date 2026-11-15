@@ -1,8 +1,8 @@
 import { SITES, SPAWNS} from "./config.js";
 const S = (x1, z1, x2, z2, y1, kind = "wall", y0 = 0) => ({ x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2), y0: y0, y1: y1, kind: kind});
 const boxes = text => text.trim().split("\n").map(row => {
- const [x1, z1, x2, z2, y1, y0 = 0, kind = "wall"] = row.split(" ");
- return { x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2), y0: +y0, y1: +y1, kind: kind};});
+const [x1, z1, x2, z2, y1, y0 = 0, kind = "wall"] = row.split(" ");
+return { x1: Math.min(x1, x2), x2: Math.max(x1, x2), z1: Math.min(z1, z2), z2: Math.max(z1, z2), y0: +y0, y1: +y1, kind: kind};});
 
 const perimeter = boxes(`
 -41 -49 41 -47 9 0 wall
@@ -78,16 +78,16 @@ const pillars = boxes(`
 -12 2 -10.8 3.2 8 0 pillar
 `);
 const catwalks = [ {
- id: "east",
- deck: { x1: 30, z1: -16, x2: 38, z2: 12, y: 3.3},
- rail: [ { x1: 30, z1: -16, x2: 30.3, z2: 12, h: 1.1}, { x1: 30, z1: -16, x2: 38, z2: -15.7, h: 1.1} ],
- stairs: { x1: 30.4, z1: 12.4, x2: 34.0, z2: 16.0, steps: 11, rise: 0.3, run: 0.32, dir: "z"},
- sign: "CATWALK 1"}, {
- id: "west",
- deck: { x1: -38, z1: -6, x2: -30, z2: 18, y: 3.3},
- rail: [ { x1: -30.3, z1: -6, x2: -30, z2: 18, h: 1.1}, { x1: -38, z1: 17.7, x2: -30, z2: 18, h: 1.1} ],
- stairs: { x1: -34.6, z1: 18.4, x2: -30.6, z2: 22.0, steps: 11, rise: 0.3, run: 0.32, dir: "z"},
- sign: "CATWALK 2"} ];
+id: "east",
+deck: { x1: 30, z1: -16, x2: 38, z2: 12, y: 3.3},
+rail: [ { x1: 30, z1: -16, x2: 30.3, z2: 12, h: 1.1}, { x1: 30, z1: -16, x2: 38, z2: -15.7, h: 1.1} ],
+stairs: { x1: 30.4, z1: 12.4, x2: 34.0, z2: 16.0, steps: 11, rise: 0.3, run: 0.32, dir: "z"},
+sign: "CATWALK 1"}, {
+id: "west",
+deck: { x1: -38, z1: -6, x2: -30, z2: 18, y: 3.3},
+rail: [ { x1: -30.3, z1: -6, x2: -30, z2: 18, h: 1.1}, { x1: -38, z1: 17.7, x2: -30, z2: 18, h: 1.1} ],
+stairs: { x1: -34.6, z1: 18.4, x2: -30.6, z2: 22.0, steps: 11, rise: 0.3, run: 0.32, dir: "z"},
+sign: "CATWALK 2"} ];
 export const props = `pipe -8.6 16 -8.2 43 4.6 0.34
 pipe 8.2 -25 8.6 3 4.9 0.3
 pipe 23.4 17 23.8 43 3.4 0.26
@@ -99,24 +99,24 @@ beacon B -24 26
 sign -10.4 42.4 0.32 MID
 sign 10.4 42.4 -0.32 A
 sign 0 -37.2 3.141592653589793 MID`.trim().split("\n").map(row => {
- const [kind, a, b, c, d, e, f] = row.split(" ");
- if (kind === "beacon") return { kind: kind, site: a, x: +b, z: +c};
- if (kind === "sign") return { kind: kind, x: +a, z: +b, ry: +c, text: d};
- if (kind === "tank") return { kind: kind, x: +a, z: +b, r: +c, h: +d};
- return { kind: kind, x1: +a, z1: +b, x2: +c, z2: +d, y: +e, r: +(f ?? 0)};});
+const [kind, a, b, c, d, e, f] = row.split(" ");
+if (kind === "beacon") return { kind: kind, site: a, x: +b, z: +c};
+if (kind === "sign") return { kind: kind, x: +a, z: +b, ry: +c, text: d};
+if (kind === "tank") return { kind: kind, x: +a, z: +b, r: +c, h: +d};
+return { kind: kind, x1: +a, z1: +b, x2: +c, z2: +d, y: +e, r: +(f ?? 0)};});
 export const SOLIDS = [ ...perimeter, ...spineWalls, ...laneWalls, ...blocks, ...cover, ...pillars ];
 export const CATWALK_SOLIDS = [];
 for (const cw of catwalks) {
- const d = cw.deck;
- CATWALK_SOLIDS.push(S(d.x1, d.z1, d.x2, d.z2, d.y, "deck"));
- for (const r of cw.rail) CATWALK_SOLIDS.push(S(r.x1, r.z1, r.x2, r.z2, d.y + r.h, "rail", d.y));
- const st = cw.stairs;
- for (let i = 0; i < st.steps; i++) {
-  const t0 = i / st.steps;
-  const t1 = (i + 1) / st.steps;
-  const z1 = st.z1 + (st.z2 - st.z1) * t0;
-  const z2 = st.z1 + (st.z2 - st.z1) * t1;
-  CATWALK_SOLIDS.push(S(st.x1, z1, st.x2, z2, st.rise * (st.steps - i), "stair", 0));}}
+const d = cw.deck;
+CATWALK_SOLIDS.push(S(d.x1, d.z1, d.x2, d.z2, d.y, "deck"));
+for (const r of cw.rail) CATWALK_SOLIDS.push(S(r.x1, r.z1, r.x2, r.z2, d.y + r.h, "rail", d.y));
+const st = cw.stairs;
+for (let i = 0; i < st.steps; i++) {
+const t0 = i / st.steps;
+const t1 = (i + 1) / st.steps;
+const z1 = st.z1 + (st.z2 - st.z1) * t0;
+const z2 = st.z1 + (st.z2 - st.z1) * t1;
+CATWALK_SOLIDS.push(S(st.x1, z1, st.x2, z2, st.rise * (st.steps - i), "stair", 0));}}
 export const ALL_SOLIDS = [ ...SOLIDS, ...CATWALK_SOLIDS ];
 const LANES = { s: "spawn", m: "mid", c: "cross", a: "A", b: "B", h: "high"};
 const rows = text => text.trim().split("\n").map(row => row.split(" "));
@@ -205,42 +205,42 @@ h4 -34 8 h 3.3
 h5 -32 16 h 3.3
 `).map(([ id, x, z, lane, y = 0, role = null ]) => ({ id: id, x: +x, z: +z, y: +y, lane: LANES[lane], role: role}));
 function buildEdges() {
- const edges = new Map;
- const link = (a, b) => {
-  if (!edges.has(a)) edges.set(a, []);
-  if (!edges.has(b)) edges.set(b, []);
-  edges.get(a).push(b);
-  edges.get(b).push(a);};
- const chain = (...ids) => {
-  for (let i = 0; i + 1 < ids.length; i++) link(ids[i], ids[i + 1]);};
- chain("s0", "s1", "s2");
- chain("s0", "m0", "m1", "m2", "m3", "m4", "m5", "x0");
- chain("x0", "x5", "x6", "n0", "n1", "n2", "n3", "n4", "n5", "c3", "c1", "c0");
- chain("n4", "n6", "c4", "c2", "c0");
- chain("x0", "x1", "x3", "k5", "k6", "k7", "k8", "k9", "b11");
- chain("x0", "x2", "x4", "k0", "k1", "k2", "k3", "k4", "a8");
- chain("k0", "m5");
- chain("k1", "x6");
- chain("s1", "k12", "k13", "b3");
- chain("s2", "k11", "k10", "a1");
- chain("c3", "k15", "b11");
- chain("c4", "k14", "a8");
- chain("a1", "a0", "a2", "a3", "a4", "a5", "a6", "a7", "a8");
- chain("a3", "k10");
- chain("a8", "a9", "A4", "A1", "A0", "A2", "A3");
- chain("A1", "A4");
- chain("A0", "k4");
- chain("a7", "k3");
- chain("b3", "b0", "b2", "b4", "b5", "b6", "b7", "b8", "b9", "b10", "b11");
- chain("b3", "b1");
- chain("b10", "B4", "B1", "B0", "B2", "B3");
- chain("B4", "k13");
- chain("b11", "k9");
- chain("h0", "h1", "h2");
- chain("h3", "h4", "h5");
- chain("h2", "a3");
- chain("h5", "b3");
- return edges;}
+const edges = new Map;
+const link = (a, b) => {
+if (!edges.has(a)) edges.set(a, []);
+if (!edges.has(b)) edges.set(b, []);
+edges.get(a).push(b);
+edges.get(b).push(a);};
+const chain = (...ids) => {
+for (let i = 0; i + 1 < ids.length; i++) link(ids[i], ids[i + 1]);};
+chain("s0", "s1", "s2");
+chain("s0", "m0", "m1", "m2", "m3", "m4", "m5", "x0");
+chain("x0", "x5", "x6", "n0", "n1", "n2", "n3", "n4", "n5", "c3", "c1", "c0");
+chain("n4", "n6", "c4", "c2", "c0");
+chain("x0", "x1", "x3", "k5", "k6", "k7", "k8", "k9", "b11");
+chain("x0", "x2", "x4", "k0", "k1", "k2", "k3", "k4", "a8");
+chain("k0", "m5");
+chain("k1", "x6");
+chain("s1", "k12", "k13", "b3");
+chain("s2", "k11", "k10", "a1");
+chain("c3", "k15", "b11");
+chain("c4", "k14", "a8");
+chain("a1", "a0", "a2", "a3", "a4", "a5", "a6", "a7", "a8");
+chain("a3", "k10");
+chain("a8", "a9", "A4", "A1", "A0", "A2", "A3");
+chain("A1", "A4");
+chain("A0", "k4");
+chain("a7", "k3");
+chain("b3", "b0", "b2", "b4", "b5", "b6", "b7", "b8", "b9", "b10", "b11");
+chain("b3", "b1");
+chain("b10", "B4", "B1", "B0", "B2", "B3");
+chain("B4", "k13");
+chain("b11", "k9");
+chain("h0", "h1", "h2");
+chain("h3", "h4", "h5");
+chain("h2", "a3");
+chain("h5", "b3");
+return edges;}
 export const NAV_EDGES = buildEdges();
 export const COVER = rows(`
 cA1 26 -22.6 200 a
